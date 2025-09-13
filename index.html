@@ -1,0 +1,2126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Food Rescue — Demo</title>
+  <!-- React + ReactDOM + Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PapaParse + JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/pavaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); }
+    .card { transition: transform .18s ease, box-shadow .18s ease; }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(16,24,40,0.12); }
+    .sidebar-icon { width:22px; height:22px; display:inline-block; fill: currentColor; } /* Ensure icon color inherits */
+    .tiny { font-size: 12px; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes checkmark {
+      0% { stroke-dashoffset: 50; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .confirmation-animation {
+      animation: fadeIn 0.5s ease-out;
+    }
+    .checkmark-circle {
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      animation: checkmark 0.5s ease-out forwards;
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar-icon { width: 20px; height: 20px; }
+      .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+      .md\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+      .md\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+      .md\:grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      .lg\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+      .lg\:grid-cols-3 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+      .lg\:col-span-2 { grid-column: span 1 / span 1 !important; }
+      .hidden.md\:block { display: none !important; }
+      .md\:w-72 { width: 100% !important; }
+      .flex-col.md\:flex-row { flex-direction: column !important; }
+      .gap-6.md\:gap-6 { gap: 1rem !important; }
+      .p-4.md\:p-8 { padding: 1rem !important; }
+      .text-3xl { font-size: 1.5rem !important; }
+      .text-2xl { font-size: 1.25rem !important; }
+      .text-xl { font-size: 1.125rem !important; }
+      .rounded-tr-2xl.rounded-br-2xl { border-radius: 1rem !important; }
+      .max-w-4xl { max-width: 100% !important; }
+      .max-w-3xl { max-width: 100% !important; }
+      .fixed.inset-0 { padding: 0.5rem !important; }
+    }
+    /* Light Mode - Original Theme */
+    body:not(.dark-mode) {
+        background: linear-gradient(to bottom right, #fef3c7, #fde68a, #a7f3d0);
+        color: #1f2937;
+    }
+    /* Dark Mode Styles - HackerRank Inspired (Black and Green) - Comprehensive */
+    .dark-mode {
+      background: linear-gradient(to bottom right, #0a1e0f, #1a3a1f, #0d2b1d); /* Deep dark green/black */
+      color: #e2e8f0;
+    }
+
+    .dark-mode body {
+      background: linear-gradient(to bottom right, #0a1e0f, #1a3a1f, #0d2b1d); /* Deep dark green/black */
+      color: #e2e8f0;
+    }
+    .dark-mode .glass {
+      background: rgba(15, 30, 15, 0.85); /* Very dark green glass */
+      backdrop-filter: blur(8px);
+      border: 1px solid #2c5233; /* Dark green border */
+    }
+    .dark-mode .card {
+      background: rgba(15, 30, 15, 0.9);
+      color: #e2e8f0;
+      border: 1px solid #2c5233;
+    }
+    .dark-mode .card:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      border-color: #059669; /* HackerRank green highlight */
+    }
+    .dark-mode input,
+    .dark-mode select,
+    .dark-mode textarea {
+      background-color: #0a1e0f;
+      color: #e2e8f0;
+      border: 1px solid #2c5233;
+    }
+    .dark-mode input:focus,
+    .dark-mode select:focus,
+    .dark-mode textarea:focus {
+      border-color: #059669; /* Focus ring in HackerRank green */
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3);
+    }
+    .dark-mode .text-gray-500 {
+      color: #94a3b8;
+    }
+    .dark-mode .text-gray-600 {
+      color: #cbd5e1;
+    }
+    .dark-mode .text-gray-400 {
+      color: #94a3b8;
+    }
+    .dark-mode .text-gray-800 {
+      color: #f1f5f9;
+    }
+    .dark-mode .bg-white {
+      background-color: #0a1e0f;
+    }
+    .dark-mode .border {
+      border-color: #2c5233;
+    }
+    .dark-mode .bg-gray-100 {
+      background-color: #0a1e0f;
+    }
+    .dark-mode .bg-emerald-100 {
+      background-color: #064e3b; /* Darker green */
+    }
+    .dark-mode .text-emerald-700 {
+      color: #6ee7b7; /* Lighter green text */
+    }
+    .dark-mode .bg-blue-100 {
+      background-color: #1e3a8a; /* Dark blue */
+    }
+    .dark-mode .text-blue-700 {
+      color: #93c5fd; /* Lighter blue text */
+    }
+    .dark-mode .bg-yellow-100, /* Override any existing yellow backgrounds */
+    .dark-mode .bg-amber-100,
+    .dark-mode .bg-amber-50 {
+      background-color: #064e3b; /* Use dark green instead */
+    }
+    .dark-mode .text-yellow-700, /* Override any existing yellow text */
+    .dark-mode .text-amber-700,
+    .dark-mode .text-amber-500 {
+      color: #6ee7b7; /* Use light green text instead */
+    }
+    .dark-mode .bg-red-100 {
+      background-color: #7f1d1d; /* Dark red */
+    }
+    .dark-mode .text-red-700 {
+      color: #fca5a5; /* Lighter red text */
+    }
+    .dark-mode .bg-green-100 {
+      background-color: #064e3b; /* Consistent dark green */
+    }
+    .dark-mode .text-green-700 {
+      color: #6ee7b7; /* Consistent light green text */
+    }
+    .dark-mode .bg-blue-50 {
+      background-color: #1e3a8a; /* Consistent dark blue */
+    }
+    .dark-mode .text-blue-800 {
+      color: #bfdbfe; /* Lighter blue text */
+    }
+    .dark-mode .bg-green-50 {
+      background-color: #064e3b; /* Consistent dark green */
+    }
+    .dark-mode .text-green-800 {
+      color: #6ee7b7; /* Consistent light green text */
+    }
+    .dark-mode .bg-purple-50 {
+      background-color: #4c1d95; /* Dark purple */
+    }
+    .dark-mode .text-purple-800 {
+      color: #d8b4fe; /* Lighter purple text */
+    }
+    .dark-mode .bg-gray-50 {
+      background-color: #0a1e0f;
+    }
+    .dark-mode .text-gray-700 {
+      color: #e2e8f0;
+    }
+    .dark-mode .bg-indigo-50 {
+      background-color: #312e81; /* Dark indigo */
+    }
+    .dark-mode .text-indigo-800 {
+      color: #c7d2fe; /* Lighter indigo text */
+    }
+    .dark-mode button.bg-emerald-600 {
+      background-color: #059669; /* HackerRank green */
+    }
+    .dark-mode button.bg-emerald-600:hover {
+      background-color: #047857; /* Slightly darker on hover */
+    }
+    .dark-mode button.bg-blue-600 {
+      background-color: #2563eb; /* Standard blue */
+    }
+    .dark-mode button.bg-white {
+      background-color: #0a1e0f;
+      border: 1px solid #2c5233;
+      color: #e2e8f0; /* Ensure text is visible */
+    }
+    .dark-mode .hover\:bg-gray-100:hover {
+      background-color: #1a3a1f;
+    }
+    .dark-mode .bg-emerald-600 {
+      background-color: #059669; /* HackerRank green */
+    }
+    .dark-mode .text-white {
+      color: #f1f5f9;
+    }
+    .dark-mode .border-gray-300 {
+      border-color: #2c5233;
+    }
+    .dark-mode .hover\:bg-gray-50:hover {
+      background-color: #1a3a1f;
+    }
+    .dark-mode .bg-indigo-600 {
+      background-color: #4f46e5; /* Standard indigo */
+    }
+    .dark-mode .confirmation-animation {
+      background-color: #0a1e0f;
+      border: 1px solid #2c5233;
+    }
+    .dark-mode .confirmation-animation .text-gray-800 {
+      color: #f1f5f9;
+    }
+    .dark-mode .confirmation-animation .text-gray-600 {
+      color: #cbd5e1;
+    }
+     /* Ensure modals also use the dark theme colors */
+    .dark-mode .fixed.inset-0.bg-black\/40 {
+        background-color: rgba(0, 0, 0, 0.6) !important; /* Darker overlay */
+    }
+    .dark-mode .relative.w-full.max-w-4xl.bg-white.rounded-2xl.p-6.shadow-lg.overflow-auto,
+    .dark-mode .relative.w-full.max-w-3xl.bg-white.rounded-2xl.p-6.shadow-lg.overflow-auto {
+        background-color: #0a1e0f !important; /* Dark background */
+        border: 1px solid #2c5233 !important; /* Dark green border */
+        color: #e2e8f0 !important; /* Light text */
+    }
+    /* Ensure icons inherit the correct color in dark mode */
+    .dark-mode .sidebar-icon {
+        color: #e2e8f0; /* Light grey/green text color for icons */
+    }
+    .dark-mode .text-emerald-700 .sidebar-icon, /* Icons inside green text areas */
+    .dark-mode .text-green-700 .sidebar-icon {
+        color: #6ee7b7; /* Lighter green */
+    }
+    .dark-mode .text-blue-700 .sidebar-icon { /* Icons inside blue text areas */
+        color: #93c5fd; /* Lighter blue */
+    }
+    .dark-mode .text-red-700 .sidebar-icon { /* Icons inside red text areas */
+        color: #fca5a5; /* Lighter red */
+    }
+    .dark-mode .text-purple-800 .sidebar-icon { /* Icons inside purple text areas */
+        color: #d8b4fe; /* Lighter purple */
+    }
+    .dark-mode .text-indigo-800 .sidebar-icon { /* Icons inside indigo text areas */
+        color: #c7d2fe; /* Lighter indigo */
+    }
+    /* Ensure header text is correct in dark mode */
+    .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4 {
+        color: #e2e8f0; /* Light grey/green */
+    }
+    .dark-mode .text-emerald-800 {
+      color: #6ee7b7; /* Consistent light green text */
+    }
+    .dark-mode .text-emerald-700 {
+      color: #34d399; /* Slightly darker light green for contrast */
+    }
+    /* Ensure toast messages adapt */
+    .dark-mode .fixed.bottom-6.right-6.z-60.px-4.py-2.rounded.shadow.text-white {
+        background-color: #1f2937; /* Dark grey background for toast */
+        color: #e2e8f0 !important; /* Light text */
+        border: 1px solid #2c5233;
+    }
+    /* Ensure buttons in modals are visible */
+    .dark-mode .px-4.py-2.bg-emerald-600.text-white.rounded-md,
+    .dark-mode .px-3.py-2.bg-emerald-600.text-white.rounded {
+        background-color: #059669 !important;
+        color: #f1f5f9 !important;
+    }
+    .dark-mode .px-4.py-2.bg-blue-600.text-white.rounded-md,
+    .dark-mode .px-3.py-2.bg-blue-600.text-white.rounded {
+        background-color: #2563eb !important;
+        color: #f1f5f9 !important;
+    }
+    .dark-mode .px-4.py-2.bg-indigo-600.text-white.rounded-md {
+        background-color: #4f46e5 !important;
+        color: #f1f5f9 !important;
+    }
+    .dark-mode .px-4.py-2.border.rounded-md,
+    .dark-mode .px-3.py-2.border.rounded {
+        background-color: transparent !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    /* Ensure form elements inside modals are styled */
+    .dark-mode .w-full.p-2.border.rounded,
+    .dark-mode .w-full.p-3.border.rounded {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode .w-full.p-2.border.rounded:focus,
+    .dark-mode .w-full.p-3.border.rounded:focus {
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3) !important;
+    }
+    /* Ensure table text in preview is visible */
+    .dark-mode .border.rounded.bg-white.p-2.text-xs {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode table.w-full thead th {
+        color: #cbd5e1 !important;
+    }
+    .dark-mode table.w-full tbody td {
+        color: #e2e8f0 !important;
+    }
+    /* Ensure stat card text is visible */
+    .dark-mode .card.p-4.rounded-2xl.glass.cursor-pointer .text-gray-900 {
+        color: #e2e8f0 !important; /* Override default dark text */
+    }
+    .dark-mode .card.p-4.rounded-2xl.glass.cursor-pointer .text-gray-500 {
+        color: #94a3b8 !important; /* Keep grey for hints */
+    }
+    /* Ensure risk labels are styled correctly */
+    .dark-mode .inline-flex.items-center.gap-2.px-2.py-1.rounded-full.text-xs.bg-green-100.text-green-700 {
+        background-color: #064e3b !important;
+        color: #6ee7b7 !important;
+    }
+    .dark-mode .inline-flex.items-center.gap-2.px-2.py-1.rounded-full.text-xs.bg-yellow-100.text-yellow-700 {
+        background-color: #713f12 !important; /* Dark amber */
+        color: #fde047 !important; /* Lighter amber text */
+    }
+    .dark-mode .inline-flex.items-center.gap-2.px-2.py-1.rounded-full.text-xs.bg-red-100.text-red-700 {
+        background-color: #7f1d1d !important;
+        color: #fca5a5 !important;
+    }
+    /* Ensure WhatsApp simulator text is visible */
+    .dark-mode .glass.p-6.rounded-2xl textarea.w-full.p-3.border.rounded {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode .px-3.py-1.bg-white.border.rounded.text-sm {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    /* Ensure modal titles and close buttons are styled */
+    .dark-mode .relative.w-full.max-w-4xl.bg-white.rounded-2xl.p-6.shadow-lg.overflow-auto h3.text-lg.font-bold,
+    .dark-mode .relative.w-full.max-w-3xl.bg-white.rounded-2xl.p-6.shadow-lg.overflow-auto h3.text-lg.font-bold {
+        color: #e2e8f0 !important;
+    }
+    .dark-mode .relative.w-full.max-w-4xl.bg-white.rounded-2xl.p-6.shadow-lg.overflow-auto button.text-gray-500,
+    .dark-mode .relative.w-full.max-w-3xl.bg-white.rounded-2xl.p-6.shadow-lg.overflow-auto button.text-gray-500 {
+        color: #94a3b8 !important;
+    }
+    /* Ensure sidebar stats text is visible */
+    .dark-mode .mt-6.text-xs.text-gray-500.hidden.md\:block .text-gray-800 {
+        color: #f1f5f9 !important;
+    }
+    .dark-mode .mt-6.text-xs.text-gray-500.hidden.md\:block {
+        color: #94a3b8 !important;
+    }
+    /* Ensure risk monitor text is visible */
+    .dark-mode .glass.p-4.rounded-lg .text-red-600 {
+        color: #f87171 !important; /* Lighter red for visibility */
+    }
+    .dark-mode .glass.p-4.rounded-lg .text-yellow-600 {
+        color: #fbbf24 !important; /* Lighter yellow for visibility (kept as is for risk level) */
+    }
+    .dark-mode .glass.p-4.rounded-lg .text-green-600 {
+        color: #34d399 !important; /* Slightly darker light green for contrast */
+    }
+    /* Ensure NGO preview text is visible */
+    .dark-mode .glass.p-4.rounded-lg.text-sm .text-xs.text-gray-400 {
+        color: #94a3b8 !important;
+    }
+    /* Ensure modal section backgrounds are dark */
+    .dark-mode .p-4.bg-blue-50.rounded-lg {
+        background-color: #1e3a8a !important; /* Dark blue */
+        color: #93c5fd !important; /* Lighter blue text */
+    }
+    .dark-mode .p-4.bg-green-50.rounded-lg {
+        background-color: #064e3b !important; /* Darker green */
+        color: #6ee7b7 !important; /* Lighter green text */
+    }
+    .dark-mode .p-4.bg-yellow-50.rounded-lg {
+        background-color: #713f12 !important; /* Dark amber */
+        color: #fde047 !important; /* Lighter amber text */
+    }
+    .dark-mode .p-4.bg-purple-50.rounded-lg {
+        background-color: #4c1d95 !important; /* Dark purple */
+        color: #d8b4fe !important; /* Lighter purple text */
+    }
+    .dark-mode .p-4.bg-gray-50.rounded-lg {
+        background-color: #0a1e0f !important; /* Dark grey */
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .p-4.bg-indigo-50.rounded-lg {
+        background-color: #312e81 !important; /* Dark indigo */
+        color: #c7d2fe !important; /* Lighter indigo text */
+    }
+    /* Ensure modal update status buttons are styled */
+    .dark-mode .px-3.py-2.text-sm.rounded.bg-emerald-600.text-white {
+        background-color: #059669 !important;
+        color: #f1f5f9 !important;
+    }
+    .dark-mode .px-3.py-2.text-sm.rounded.bg-white.border.border-gray-300.text-gray-700.hover\:bg-gray-50 {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode .px-3.py-2.text-sm.rounded.bg-white.border.border-gray-300.text-gray-700.hover\:bg-gray-50:hover {
+        background-color: #1a3a1f !important; /* Hover state */
+    }
+    /* Ensure modal feedback form elements are styled */
+    .dark-mode .block.text-sm.font-medium.text-gray-700 {
+        color: #e2e8f0 !important; /* Light text for labels */
+    }
+    .dark-mode select.w-full.p-2.border.rounded {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode select.w-full.p-2.border.rounded:focus {
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3) !important;
+    }
+    .dark-mode textarea.w-full.p-2.border.rounded {
+        background-color: #0a1e0f !important;
+        border-color: #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode textarea.w-full.p-2.border.rounded:focus {
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3) !important;
+    }
+    /* Ensure order confirmation modal is styled */
+    .dark-mode .confirmation-animation.bg-white.rounded-2xl.p-8.shadow-lg.text-center {
+        background-color: #0a1e0f !important;
+        border: 1px solid #2c5233 !important;
+        color: #e2e8f0 !important;
+    }
+    .dark-mode .confirmation-animation.bg-white.rounded-2xl.p-8.shadow-lg.text-center h2.text-2xl.font-bold.text-gray-800 {
+        color: #f1f5f9 !important;
+    }
+    .dark-mode .confirmation-animation.bg-white.rounded-2xl.p-8.shadow-lg.text-center p.text-gray-600 {
+        color: #cbd5e1 !important;
+    }
+    /* Ensure toggle button icon is visible */
+    .dark-mode button.p-1.rounded-full.hover\:bg-gray-200.dark\:hover\:bg-gray-700:hover {
+        background-color: #1a3a1f !important; /* Darker hover */
+    }
+    /* Ensure sidebar nav buttons are styled */
+    .dark-mode .w-full.flex.items-center.gap-3.p-2.rounded-md.bg-emerald-100.text-emerald-700 {
+        background-color: #064e3b !important; /* Darker green */
+        color: #6ee7b7 !important; /* Lighter green text */
+    }
+    .dark-mode .w-full.flex.items-center.gap-3.p-2.rounded-md.text-gray-700.hover\:bg-gray-100 {
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .w-full.flex.items-center.gap-3.p-2.rounded-md.text-gray-700.hover\:bg-gray-100:hover {
+        background-color: #1a3a1f !important; /* Darker hover */
+    }
+    /* Ensure main header text is styled */
+    .dark-mode h2.text-3xl.font-bold.text-emerald-800 {
+        color: #6ee7b7 !important; /* Lighter green */
+    }
+    .dark-mode p.text-sm.text-gray-600 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    /* Ensure stat card titles are styled */
+    .dark-mode .text-sm.text-gray-500 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    /* Ensure offer list text is styled */
+    .dark-mode .font-semibold.text-lg {
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .text-sm.text-gray-600 {
+        color: #cbd5e1 !important; /* Light grey */
+    }
+    .dark-mode .text-xs.text-gray-400 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    /* Ensure NGO list text is styled */
+    .dark-mode .font-semibold {
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .text-green-600.text-sm {
+        color: #6ee7b7 !important; /* Lighter green */
+    }
+    /* Ensure volunteer list text is styled */
+    /* Already covered by general .text-sm.text-gray-600 and .text-xs.text-gray-400 rules */
+    /* Ensure risk panel text is styled */
+    .dark-mode .font-semibold.mb-2 {
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .font-bold.text-green-700 {
+        color: #6ee7b7 !important; /* Lighter green */
+    }
+    .dark-mode .font-bold.text-yellow-700 {
+        color: #fde047 !important; /* Lighter amber (kept for risk level) */
+    }
+    .dark-mode .font-bold.text-red-700 {
+        color: #fca5a5 !important; /* Lighter red */
+    }
+    .dark-mode .font-semibold.mb-2.text-red-600 {
+        color: #f87171 !important; /* Lighter red */
+    }
+    .dark-mode .p-2.border.rounded.mb-2.cursor-pointer .font-medium {
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .p-2.border.rounded.mb-2.cursor-pointer .text-xs.text-red-700 {
+        color: #fca5a5 !important; /* Lighter red */
+    }
+    /* Ensure modal content text is styled */
+    .dark-mode .space-y-3 .text-sm.text-gray-600 {
+        color: #cbd5e1 !important; /* Light grey */
+    }
+    .dark-mode .space-y-3 .text-sm.text-gray-600 strong {
+        color: #e2e8f0 !important; /* Light text for strong */
+    }
+    .dark-mode .space-y-3 .text-sm.text-gray-600 span.text-red-600 {
+        color: #f87171 !important; /* Lighter red */
+    }
+    .dark-mode .space-y-3 .text-sm.text-gray-600 span.text-yellow-600 {
+        color: #fbbf24 !important; /* Lighter yellow (kept for risk level) */
+    }
+    .dark-mode .space-y-3 .text-sm.text-gray-600 span.text-green-600 {
+        color: #34d399 !important; /* Slightly darker light green for contrast */
+    }
+    /* Ensure form labels and inputs in modals are styled */
+    /* Already covered by general modal input/label rules above */
+    /* Ensure data import modal text is styled */
+    .dark-mode .text-xs.text-gray-500 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    .dark-mode .text-xs.font-medium {
+        color: #e2e8f0 !important; /* Light text */
+    }
+    .dark-mode .text-xs.text-gray-400.mt-1 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    .dark-mode .text-gray-400.p-2 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    .dark-mode .text-gray-400 {
+        color: #94a3b8 !important; /* Grey */
+    }
+    /* Ensure modal preview table text is styled */
+    /* Already covered by general modal table rules above */
+
+
+  </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-amber-100 to-emerald-50 min-h-screen">
+<div id="root"></div>
+<script type="text/babel">
+/* Final Food Rescue single-file app
+   - Embedded sample data (India-focused)
+   - Attractive UI
+   - CSV/ZIP import + mapping retained
+*/
+// ---------- Utilities ----------
+const uid = (p='id') => p + '-' + Math.random().toString(36).slice(2,9);
+const LS_OFFERS = 'fr_offers_v_final';
+const LS_NGOS = 'fr_ngos_v_final';
+const LS_VOLUNTEERS = 'fr_volunteers_v_final';
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const load = (k, fallback) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fallback; } catch(e){ return fallback; } };
+function parseNum(v) { if (v==null || v==undefined || v==='') return null; const n = Number(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?null:n; }
+function parseBool(v) { if (v===true || v===false) return v; if (!v && v!==0) return false; const s = String(v).toLowerCase(); return ['true','1','yes','y','t'].includes(s); }
+function parseArr(v){ if (!v) return []; if (Array.isArray(v)) return v; return String(v).split(/[;,|\/]+/).map(s=>s.trim()).filter(Boolean); }
+function tryDate(v){ if (!v) return null; const d = new Date(v); if (!isNaN(d)) return d.toISOString(); // try HH:MM style
+  const m = String(v).match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i); if (m){ const now = new Date(); let hh = parseInt(m[1]); const mm = parseInt(m[2]||'0'); const ap = (m[3]||'').toLowerCase(); if (ap==='pm' && hh<12) hh+=12; if (ap==='am' && hh===12) hh=0; now.setHours(hh,mm,0,0); return now.toISOString(); } return null; }
+function calcRisk(offer){
+  const now = new Date();
+  const cooked = offer.cooked_time ? new Date(offer.cooked_time) : new Date(now.getTime() - 60*60*1000);
+  const pickup = offer.pickup_deadline ? new Date(offer.pickup_deadline) : new Date(now.getTime() + 2*60*60*1000);
+  const hoursOld = (now - cooked)/(1000*60*60);
+  const hoursLeft = (pickup - now)/(1000*60*60);
+  let score = 0;
+  if (hoursOld>4) score+=40; else if (hoursOld>2) score+=20; else score+=5;
+  if (hoursLeft<1) score+=30; else if (hoursLeft<2) score+=15; else score+=5;
+  if (offer.packaging && /sealed|refrigerat|cold/i.test(offer.packaging)) score-=10;
+  if (offer.packaging && /open/i.test(offer.packaging)) score+=15;
+  score = Math.max(0, Math.min(100, score));
+  if (score>60) return 'high';
+  if (score>30) return 'medium';
+  return 'low';
+}
+// ---------- Embedded sample data generator ----------
+function generateNGOs(count=20){
+  const names = [
+    "Helping Hands","Annapurna Foundation","Care & Share","Smile Foundation","Hope Trust",
+    "Green Future","Serve & Save","Community Kitchen","Relief Aid","Food For All",
+    "Sunrise Shelter","Dignity Care","Share A Plate","Compassion Circle","Giving Roots",
+    "Neighbourhood Aid","City Meals","Shelter Hope","Urban Relief","Warm Plate"
+  ];
+  const cities = ["Hyderabad","Bangalore","Chennai","Mumbai","Delhi","Kolkata","Pune","Ahmedabad","Visakhapatnam","Lucknow"];
+  const specs = ["children","elderly_care","homeless","refugees","general_community"];
+  const diets = ["vegetarian","vegan","non_vegetarian","halal","kosher","mixed"];
+  const ngos=[];
+  for(let i=0;i<count;i++){
+    const name = names[i % names.length] + (i>9?(' '+(i+1)): '');
+    const city = cities[i % cities.length];
+    ngos.push({
+      id: uid('ngo'),
+      name,
+      contact_person: ["Ravi Kumar","Anjali Sharma","Suresh Reddy","Meena Patel","Arun Singh","Lakshmi Menon","Prakash Naidu","Rahul Verma","Divya Iyer","Kiran Joshi"][i%10],
+      phone: '9' + Math.floor(600000000 + Math.random()*300000000),
+      email: name.toLowerCase().replace(/[^a-z]/g,'') + '@ngo.org',
+      location: city,
+      capacity: [50,80,100,120,150,200,250,300][Math.floor(Math.random()*8)],
+      dietary_preferences: [diets[Math.floor(Math.random()*diets.length)]],
+      service_radius: Math.floor(Math.random()*20)+5,
+      operating_hours: "9:00 - 18:00",
+      transportation: ["own_vehicle","public_transport","need_delivery"][Math.floor(Math.random()*3)],
+      specialization: [specs[Math.floor(Math.random()*specs.length)]],
+      verified: Math.random()>0.5,
+      total_received: Math.floor(Math.random()*200)
+    });
+  }
+  return ngos;
+}
+function generateOffers(count=55){
+  const donors = [
+    "Hotel Taj","Green Cafe","Paradise Biryani","The Oak Bistro","City Catering",
+    "MG Road Events","Corporate Canteen - HCL","Blue Plate Diner","Spice Route","Urban Kitchen",
+    "Sunrise Hotel","Mandarin Delight","The Vegan Corner","Royal Tiffins","Haldi Restaurant",
+    "Nanak Dhaba","GoodFood Co.","Mealtime Catering","Fresh Greens","Riverside Events",
+    "Lotus Restaurant","Seaside Cafe","Ghar Ka Khana","Fiesta Banquets","Grand Buffet"
+  ];
+  const cuisines = ["South Indian","North Indian","Biryani","Chinese","Italian","Vegan","Mixed","Continental"];
+  const packagingTypes = ["sealed","open","refrigerated","frozen"];
+  const offers=[];
+  for(let i=0;i<count;i++){
+    const donor = donors[i % donors.length] + (i%7===0 ? ' - Event' : '');
+    const qty = Math.floor(10 + Math.random()*190);
+    const cooked = new Date(Date.now() - Math.floor(Math.random()*4)*60*60*1000); // 0-3 hours ago
+    const pickup = new Date(Date.now() + (1 + Math.floor(Math.random()*8))*60*60*1000); // 1-8 hours ahead
+    const packaging = packagingTypes[Math.floor(Math.random()*packagingTypes.length)];
+    const cuisine = cuisines[Math.floor(Math.random()*cuisines.length)];
+    const food_type = /Vegan/i.test(cuisine) ? "vegan" : (/Biryani/i.test(cuisine) ? "non_vegetarian" : (Math.random()>0.6? "vegetarian" : "mixed"));
+    const offer = {
+      id: uid('offer'),
+      title: `${cuisine} from ${donor}`,
+      food_type,
+      cuisine,
+      quantity: qty,
+      cooked_time: cooked.toISOString(),
+      pickup_deadline: pickup.toISOString(),
+      donor_name: donor,
+      location: ["Hyderabad","Bangalore","Chennai","Mumbai","Delhi","Kolkata","Pune","Visakhapatnam"][i%8],
+      packaging,
+      status: "available",
+      notes: "Auto-generated sample offer"
+    };
+    offer.risk_level = calcRisk(offer);
+    offers.push(offer);
+  }
+  return offers;
+}
+function generateVolunteers(count=15) {
+  const names = [
+    "Arjun Reddy", "Priya Sharma", "Rajesh Kumar", "Sneha Patel", "Vikram Singh",
+    "Ananya Desai", "Karan Mehta", "Neha Iyer", "Deepak Nair", "Pooja Verma",
+    "Manoj Rao", "Shalini Menon", "Amit Joshi", "Kavita Reddy", "Rohan Pillai"
+  ];
+  const locations = ["Hyderabad", "Bangalore", "Chennai", "Mumbai", "Delhi"];
+  const volunteers = [];
+  for(let i=0; i<count; i++) {
+    volunteers.push({
+      id: uid('volunteer'),
+      name: names[i % names.length],
+      phone: '9' + Math.floor(600000000 + Math.random()*300000000),
+      email: names[i % names.length].toLowerCase().replace(/\s+/g, '.') + '@volunteer.org',
+      location: locations[Math.floor(Math.random() * locations.length)],
+      availability: "available",
+      total_tasks: Math.floor(Math.random() * 50)
+    });
+  }
+  return volunteers;
+}
+// ---------- Initial data (prefer localStorage if present) ----------
+const embeddedNGOs = generateNGOs(20);
+const embeddedOffers = generateOffers(55);
+const embeddedVolunteers = generateVolunteers(15);
+const initialNGOs = load(LS_NGOS, embeddedNGOs);
+const initialOffers = load(LS_OFFERS, embeddedOffers);
+const initialVolunteers = load(LS_VOLUNTEERS, embeddedVolunteers);
+// ---------- Sound Effects ----------
+let audioContext;
+let audioReady = false;
+// Function to initialize and resume audio context
+function setupAudio() {
+  // Create AudioContext if it doesn't exist
+  if (!audioContext) {
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      console.log("AudioContext created.");
+    } catch (e) {
+      console.error('Web Audio API not supported:', e);
+      return; // If not supported, sounds just won't play
+    }
+  }
+  // If context exists but is suspended, resume it
+  if (audioContext.state === 'suspended') {
+    audioContext.resume().then(() => {
+      console.log("AudioContext resumed and ready.");
+      audioReady = true;
+    }).catch(e => {
+      console.error('Error resuming AudioContext:', e);
+    });
+  } else {
+    // Context might already be running (less likely on first interaction)
+    audioReady = true;
+    console.log("AudioContext already ready.");
+  }
+}
+// Setup audio on the first user interaction (mousedown, keydown, touchstart)
+// Using capture phase to catch it as early as possible
+document.addEventListener('mousedown', setupAudio, { once: true, capture: true });
+document.addEventListener('keydown', setupAudio, { once: true, capture: true });
+document.addEventListener('touchstart', setupAudio, { once: true, capture: true });
+// Play sound function with state check and normal volume
+function playHoverSound(frequency = 200, duration = 0.05) {
+  // Check if audio is ready before attempting to play
+  if (!audioReady || !audioContext) {
+    // console.log("Audio not ready yet, skipping sound."); // Optional debug
+    return;
+  }
+  try {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+    // Set volume to a normal, audible level
+    const volume = 0.15; // Increased from 0.1 to 0.15
+    gainNode.gain.value = volume;
+    // Optional: Add a quick fade out for a cleaner sound
+    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (e) {
+    console.error('Error playing sound:', e);
+  }
+}
+// Play confirmation sound (different frequency for distinction)
+function playConfirmationSound() {
+  playHoverSound(400, 0.1); // Higher pitch for confirmation
+}
+// Play order placed sound (louder and different pattern)
+function playOrderPlacedSound() {
+  // Check if audio is ready before attempting to play
+  if (!audioReady || !audioContext) {
+    return;
+  }
+  try {
+    // Play a sequence of tones with increased volume
+    const volume = 0.25; // Increased volume for order placement
+    // First tone (C5)
+    const oscillator1 = audioContext.createOscillator();
+    const gainNode1 = audioContext.createGain();
+    oscillator1.type = 'sine';
+    oscillator1.frequency.value = 523.25; // C5
+    gainNode1.gain.value = volume;
+    gainNode1.gain.setValueAtTime(volume, audioContext.currentTime);
+    gainNode1.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+    oscillator1.connect(gainNode1);
+    gainNode1.connect(audioContext.destination);
+    oscillator1.start();
+    oscillator1.stop(audioContext.currentTime + 0.15);
+    // Second tone (E5) after 100ms
+    setTimeout(() => {
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode2 = audioContext.createGain();
+      oscillator2.type = 'sine';
+      oscillator2.frequency.value = 659.25; // E5
+      gainNode2.gain.value = volume;
+      gainNode2.gain.setValueAtTime(volume, audioContext.currentTime);
+      gainNode2.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+      oscillator2.connect(gainNode2);
+      gainNode2.connect(audioContext.destination);
+      oscillator2.start();
+      oscillator2.stop(audioContext.currentTime + 0.15);
+    }, 100);
+    // Third tone (G5) after 200ms
+    setTimeout(() => {
+      const oscillator3 = audioContext.createOscillator();
+      const gainNode3 = audioContext.createGain();
+      oscillator3.type = 'sine';
+      oscillator3.frequency.value = 783.99; // G5
+      gainNode3.gain.value = volume;
+      gainNode3.gain.setValueAtTime(volume, audioContext.currentTime);
+      gainNode3.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+      oscillator3.connect(gainNode3);
+      gainNode3.connect(audioContext.destination);
+      oscillator3.start();
+      oscillator3.stop(audioContext.currentTime + 0.2);
+    }, 200);
+  } catch (e) {
+    console.error('Error playing order placed sound:', e);
+  }
+}
+// ---------- Small UI components ----------
+function Icon({name}) {
+  const icons = {
+    dashboard:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z"/></svg>),
+    offers:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M21 11.5V6a2 2 0 0 0-2-2h-5.5M3 12.5v5a2 2 0 0 0-4-4h-5.5"/></svg>),
+    ngos:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4" strokeWidth="1.5"/></svg>),
+    risk:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M2 12h20"/></svg>),
+    import:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M12 3v12"/><path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M8 11l4 4 4-4"/></svg>),
+    chat:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 0 1-2 2H8l-5 3V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>),
+    volunteers:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87"/><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>),
+    tasks:(<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>),
+    sun: (<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="5" strokeWidth="1.5"/><line x1="12" y1="1" x2="12" y2="3" strokeWidth="1.5"/><line x1="12" y1="21" x2="12" y2="23" strokeWidth="1.5"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" strokeWidth="1.5"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" strokeWidth="1.5"/><line x1="1" y1="12" x2="3" y2="12" strokeWidth="1.5"/><line x1="21" y1="12" x2="23" y2="12" strokeWidth="1.5"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" strokeWidth="1.5"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" strokeWidth="1.5"/></svg>),
+    moon: (<svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>)
+  };
+  return icons[name] || icons.import;
+}
+function toast(msg, t='info'){
+  const el = document.createElement('div');
+  el.className = 'fixed bottom-6 right-6 z-60 px-4 py-2 rounded shadow text-white';
+  el.style.background = t==='success' ? '#16a34a' : (t==='error' ? '#dc2626' : '#1f2937');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=> { el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 1800);
+}
+// ---------- Mapping import modal (kept minimal but powerful) ----------
+function DataImportModal({open, onClose, onImport}) {
+  const [fileInfo, setFileInfo] = React.useState(null);
+  const [rows, setRows] = React.useState([]);
+  const [headers, setHeaders] = React.useState([]);
+  const [target, setTarget] = React.useState('offers'); // offers or ngos
+  const [mapping, setMapping] = React.useState({});
+  const [preview, setPreview] = React.useState([]);
+  React.useEffect(()=>{ if (!open){ setFileInfo(null); setRows([]); setHeaders([]); setMapping({}); setPreview([]); setTarget('offers'); } }, [open]);
+  function suggest(headersLower, field){
+    const keywords = {
+      name:['name','organization','org','ngo','restaurant','vendor'],
+      contact_person:['contact','contact_person','manager','poc','contactname'],
+      phone:['phone','mobile','contact_number','telephone'],
+      email:['email','e-mail','mail'],
+      location:['location','city','address','area'],
+      capacity:['capacity','cap','portions','max'],
+      dietary_preferences:['diet','dietary','food_type','cuisine'],
+      title:['title','offer','description','food'],
+      donor_name:['donor','restaurant','vendor','source','name'],
+      quantity:['quantity','qty','portions','meals','count'],
+      cooked_time:['cooked','prepared','time'],
+      pickup_deadline:['pickup','deadline','pickup_time'],
+      packaging:['packaging','sealed','container','pack'],
+      status:['status'],
+      risk_level:['risk']
+    }[field] || [field];
+    for (const kw of keywords){
+      for (let i=0;i<headersLower.length;i++){
+        if (headersLower[i].includes(kw)) return headers[i];
+      }
+    }
+    return '';
+  }
+  function handleFile(file){
+    if (!file) return;
+    setFileInfo({name:file.name, size:file.size});
+    const lname = file.name.toLowerCase();
+    if (lname.endsWith('.zip')){
+      JSZip.loadAsync(file).then(zip=>{
+        const files = Object.keys(zip.files).filter(n=>!zip.files[n].dir && n.toLowerCase().endsWith('.csv'));
+        if (!files.length) { toast('No CSV in ZIP','error'); return; }
+        // pick the first
+        zip.files[files[0]].async('string').then(content=>{
+          Papa.parse(content, {header:true, skipEmptyLines:true, complete:(res)=>{
+            setRows(res.data || []); setHeaders(res.meta && res.meta.fields ? res.meta.fields : Object.keys(res.data[0]||{}));
+            initMap(res.meta && res.meta.fields ? res.meta.fields : Object.keys(res.data[0]||{}));
+            toast('Parsed CSV from ZIP: ' + files[0], 'success');
+          }});
+        });
+      }).catch(e=>toast('ZIP error: '+e.message,'error'));
+      return;
+    }
+    Papa.parse(file, {header:true, skipEmptyLines:true, complete:(res)=>{
+      setRows(res.data || []); setHeaders(res.meta && res.meta.fields ? res.meta.fields : Object.keys(res.data[0]||{}));
+      initMap(res.meta && res.meta.fields ? res.meta.fields : Object.keys(res.data[0]||{}));
+      toast('Parsed CSV: ' + file.name,'success');
+    }, error:(err)=> toast('CSV parse error: '+err.message,'error')});
+  }
+  function initMap(hdrs){
+    const lower = hdrs.map(h=>String(h).toLowerCase());
+    const map = {};
+    const fields = target === 'ngos' ? ['name','contact_person','phone','email','location','capacity','dietary_preferences','service_radius','operating_hours','transportation','specialization','verified','total_received'] :
+      ['title','food_type','cuisine','quantity','cooked_time','pickup_deadline','donor_name','location','packaging','notes','status','risk_level'];
+    fields.forEach(f => map[f] = {header: suggest(lower, f), def:''});
+    setMapping(map);
+  }
+  function updateMap(field, value, isDefault){
+    setMapping(prev => ({...prev, [field]: isDefault ? {header:'', def:value} : {header:value, def:''}}));
+  }
+  function buildPreview(){
+    const src = rows.slice(0,50);
+    if (!src.length) { toast('No rows to preview','error'); return; }
+    const mapped = src.map(row => {
+      if (target==='ngos'){
+        const obj = {};
+        for (const f in mapping){
+          const map = mapping[f];
+          const raw = map.header ? row[map.header] : (map.def || '');
+          if (f==='capacity') obj[f] = parseNum(raw) || 50;
+          else if (f==='verified') obj[f] = parseBool(raw);
+          else if (f==='dietary_preferences') obj[f] = parseArr(raw);
+          else if (f==='total_received') obj[f] = parseNum(raw) || 0;
+          else obj[f] = String(raw || '').trim();
+        }
+        obj.id = uid('ngo'); return obj;
+      } else {
+        const obj = {};
+        for (const f in mapping){
+          const map = mapping[f];
+          const raw = map.header ? row[map.header] : (map.def || '');
+          if (f==='quantity') obj[f] = parseNum(raw) || 10;
+          else if (f==='cooked_time') obj[f] = tryDate(raw) || new Date().toISOString();
+          else if (f==='pickup_deadline') obj[f] = tryDate(raw) || new Date(Date.now()+2*60*60*1000).toISOString();
+          else obj[f] = String(raw || '').trim();
+        }
+        obj.id = uid('offer'); obj.risk_level = obj.risk_level || calcRisk(obj); obj.status = obj.status || 'available';
+        return obj;
+      }
+    });
+    setPreview(mapped);
+  }
+  function doImport(){
+    if (!rows.length) { toast('No parsed rows to import','error'); return; }
+    const mappedAll = rows.map(row => {
+      if (target==='ngos'){
+        const obj = {};
+        for (const f in mapping){
+          const map = mapping[f];
+          const raw = map.header ? row[map.header] : (map.def || '');
+          if (f==='capacity') obj[f] = parseNum(raw) || 50;
+          else if (f==='verified') obj[f] = parseBool(raw);
+          else if (f==='dietary_preferences') obj[f] = parseArr(raw);
+          else if (f==='total_received') obj[f] = parseNum(raw) || 0;
+          else obj[f] = String(raw || '').trim();
+        }
+        obj.id = uid('ngo'); return {type:'ngo', data:obj};
+      } else {
+        const obj = {};
+        for (const f in mapping){
+          const map = mapping[f];
+          const raw = map.header ? row[map.header] : (map.def || '');
+          if (f==='quantity') obj[f] = parseNum(raw) || 10;
+          else if (f==='cooked_time') obj[f] = tryDate(raw) || new Date().toISOString();
+          else if (f==='pickup_deadline') obj[f] = tryDate(raw) || new Date(Date.now()+2*60*60*1000).toISOString();
+          else obj[f] = String(raw || '').trim();
+        }
+        obj.id = uid('offer'); obj.risk_level = obj.risk_level || calcRisk(obj); obj.status = obj.status || 'available';
+        return {type:'offer', data:obj};
+      }
+    });
+    onImport(mappedAll);
+    onClose();
+  }
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+      <div className="relative w-full max-w-4xl bg-white rounded-2xl p-6 shadow-lg overflow-auto" style={{maxHeight:'90vh'}}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">Import Data (CSV or ZIP) — Map columns</h3>
+          <button onClick={onClose} className="text-gray-500">✕</button>
+        </div>
+        <div className="space-y-4">
+          <div className="flex gap-2 items-center">
+            <input type="file" accept=".csv,.zip,.txt" onChange={(e)=> handleFile(e.target.files[0])} />
+            <div className="text-xs text-gray-500">{fileInfo ? fileInfo.name : 'No file selected'}</div>
+            <div className="ml-auto flex items-center gap-2">
+              <label className="text-xs text-gray-500">Target:</label>
+              <select value={target} onChange={(e)=> { setTarget(e.target.value); if (headers.length) initMap(headers); }} className="p-1 border rounded">
+                <option value="offers">Offers (Donors)</option>
+                <option value="ngos">NGOs (Receivers)</option>
+              </select>
+              <button className="px-3 py-1 bg-slate-100 rounded" onClick={()=>{ if (headers.length) initMap(headers); toast('Auto-map applied (verify before import)','success'); }}>Auto-map</button>
+              <button className="px-3 py-1 bg-emerald-600 text-white rounded" onClick={buildPreview}>Preview</button>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="glass p-3 rounded">
+              <h4 className="font-semibold">Detected headers</h4>
+              <div className="text-xs text-gray-500 mb-2">First row preview below</div>
+              <div style={{maxHeight:160, overflow:'auto'}} className="text-xs">
+                {headers.length===0 ? <div className="text-gray-400">No headers detected yet</div> : headers.map(h => <div key={h} className="py-1 border-b">{h}</div>)}
+              </div>
+            </div>
+            <div className="glass p-3 rounded">
+              <h4 className="font-semibold">Mapping (verify)</h4>
+              <div className="text-xs text-gray-500 mb-2">Map CSV columns to app fields or set default values</div>
+              <div style={{maxHeight:280, overflow:'auto'}}>
+                {(target==='ngos' ? ['name','contact_person','phone','email','location','capacity','dietary_preferences','service_radius','operating_hours','transportation','specialization','verified','total_received'] :
+                  ['title','food_type','cuisine','quantity','cooked_time','pickup_deadline','donor_name','location','packaging','notes','status','risk_level']).map(f => (
+                  <div key={f} className="mb-2">
+                    <div className="text-xs font-medium">{f}</div>
+                    <div className="flex gap-2 mt-1">
+                      <select className="p-1 border rounded flex-1" value={mapping[f] && mapping[f].header ? mapping[f].header : ''} onChange={(e)=> updateMap(f, e.target.value, false)}>
+                        <option value="">-- select column --</option>
+                        {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                      <input className="p-1 border rounded w-40" placeholder="Default value (optional)" value={mapping[f] ? mapping[f].def : ''} onChange={(e)=> updateMap(f, e.target.value, true)} />
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">Sample: {mapping[f] && mapping[f].header && rows[0] ? String(rows[0][mapping[f].header]||'') : (mapping[f] && mapping[f].def ? String(mapping[f].def) : '—')}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-semibold">Preview (first 20 mapped rows)</h4>
+            <div style={{maxHeight:220, overflow:'auto'}} className="border rounded bg-white p-2 text-xs">
+              {preview.length===0 ? <div className="text-gray-400 p-2">No preview — click Preview after mapping.</div> :
+                <table className="w-full">
+                  <thead><tr>{Object.keys(preview[0]).slice(0,10).map(h=> <th key={h} className="text-left">{h}</th>)}</tr></thead>
+                  <tbody>
+                    {preview.slice(0,20).map((r,ri)=> <tr key={ri}>{Object.keys(r).slice(0,10).map((k,ci)=> <td key={ci}>{ typeof r[k] === 'object' ? JSON.stringify(r[k]).slice(0,80) : String(r[k]).slice(0,80) }</td>)}</tr>)}
+                  </tbody>
+                </table>
+              }
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button className="px-3 py-2 border rounded" onClick={onClose}>Close</button>
+            <button className="px-3 py-2 bg-emerald-600 text-white rounded" onClick={doImport}>Import into App</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ---------- Smaller UI building blocks ----------
+function StatCard({title, value, hint, onClick}) {
+  return (
+    <div className="card p-4 rounded-2xl glass cursor-pointer" onClick={onClick} onMouseEnter={() => playHoverSound(250)}>
+      <div className="text-sm text-gray-500">{title}</div>
+      <div className="text-2xl font-bold text-gray-900">{value}</div>
+      {hint && <div className="text-xs text-gray-500 mt-1">{hint}</div>}
+    </div>
+  );
+}
+function OfferList({offers, onOpen}) {
+  const avail = offers.filter(o=>o.status==='available');
+  if (!avail.length) return <div className="p-6 glass rounded-2xl">No offers available.</div>;
+  return (
+    <div className="grid gap-3">
+      {avail.map(o => (
+        <div
+          key={o.id}
+          className="card p-4 rounded-xl glass flex justify-between items-start cursor-pointer"
+          onClick={()=>onOpen(o)}
+          onMouseEnter={() => playHoverSound(250)}
+        >
+          <div>
+            <div className="font-semibold text-lg">{o.title} <span className="text-xs text-gray-500">· {o.quantity} portions</span></div>
+            <div className="text-sm text-gray-600">{o.donor_name} · {o.location}</div>
+            <div className="text-xs text-gray-400 mt-1">Pickup by {new Date(o.pickup_deadline).toLocaleString()}</div>
+          </div>
+          <div className="text-right">
+            <div className={"inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs " + (o.risk_level==='low' ? 'bg-green-100 text-green-700' : (o.risk_level==='medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'))}>
+              {o.risk_level}
+            </div>
+            <div className="mt-3 text-xs text-gray-400">{o.packaging || '—'}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+function NGOList({ngos, onEdit}) {
+  if (!ngos.length) return <div className="p-6 glass rounded-2xl">No NGOs added yet.</div>;
+  return (
+    <div className="grid gap-3">
+      {ngos.map(n=>(
+        <div
+          key={n.id}
+          className="card p-4 rounded-xl glass flex justify-between items-center cursor-pointer"
+          onMouseEnter={() => playHoverSound(300)}
+        >
+          <div>
+            <div className="font-semibold">{n.name} {n.verified && <span className="text-green-600 text-sm">✔</span>}</div>
+            <div className="text-sm text-gray-600">{n.contact_person || '—'} · {n.phone || '—'}</div>
+            <div className="text-xs text-gray-400">{n.location || '—'} · Capacity: {n.capacity || 'N/A'}</div>
+          </div>
+          <div>
+            <button className="px-3 py-1 rounded-md bg-blue-600 text-white text-sm" onClick={()=>onEdit(n)} onMouseEnter={() => playHoverSound(350)}>Edit</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+function VolunteerList({volunteers, onEdit}) {
+  if (!volunteers.length) return <div className="p-6 glass rounded-2xl">No volunteers added yet.</div>;
+  return (
+    <div className="grid gap-3">
+      {volunteers.map(v=>(
+        <div
+          key={v.id}
+          className="card p-4 rounded-xl glass flex justify-between items-center"
+          onMouseEnter={() => playHoverSound(300)}
+        >
+          <div>
+            <div className="font-semibold">{v.name}</div>
+            <div className="text-sm text-gray-600">{v.phone || '—'} · {v.email || '—'}</div>
+            <div className="text-xs text-gray-400">{v.location || '—'} · Availability: {v.availability}</div>
+          </div>
+          <div>
+            <button className="px-3 py-1 rounded-md bg-blue-600 text-white text-sm" onClick={()=>onEdit(v)} onMouseEnter={() => playHoverSound(350)}>Edit</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+function RiskPanel({offers, onOpen}) {
+  const counts = offers.reduce((acc,o)=> { acc[o.risk_level] = (acc[o.risk_level]||0)+1; return acc; }, {low:0, medium:0, high:0});
+  const urgent = offers.filter(o=>o.risk_level==='high' && o.status==='available').slice(0,6);
+  return (
+    <div className="grid lg:grid-cols-2 gap-4">
+      <div className="glass p-4 rounded-2xl">
+        <h4 className="font-semibold mb-2">Risk Distribution</h4>
+        <div className="text-sm"><span className="font-bold text-green-700">{counts.low||0}</span> low · <span className="font-bold text-yellow-700">{counts.medium||0}</span> medium · <span className="font-bold text-red-700">{counts.high||0}</span> high</div>
+      </div>
+      <div className="glass p-4 rounded-2xl">
+        <h4 className="font-semibold mb-2 text-red-600">Urgent Offers</h4>
+        {urgent.length===0 ? <div className="text-gray-500">No urgent offers</div> : urgent.map(o=>(
+          <div key={o.id} className="p-2 border rounded mb-2 cursor-pointer" onClick={()=>onOpen(o)} onMouseEnter={() => playHoverSound(200)}>
+            <div className="font-medium">{o.title}</div>
+            <div className="text-xs text-red-700">{o.quantity} portions · pick by {new Date(o.pickup_deadline).toLocaleTimeString()}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+// ---------- Modals ----------
+function Modal({open, title, onClose, children, wide, className=""}){ if(!open) return null; return (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+    <div className={`relative w-full max-w-${wide ? '4xl' : '3xl'} bg-white rounded-2xl p-6 shadow-lg overflow-auto ${className}`} style={{maxHeight:'90vh'}}>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold">{title}</h3><button onClick={onClose} className="text-gray-500">✕</button>
+      </div>
+      {children}
+    </div>
+  </div>
+);}
+// Offer details modal
+function OfferModal({offer, onClose, onPick, onMatch}) {
+  if (!offer) return null;
+  return (
+    <Modal open={!!offer} title={offer.title} onClose={onClose}>
+      <div className="space-y-3">
+        <div className="text-sm text-gray-600">Donor: <strong>{offer.donor_name}</strong></div>
+        <div className="text-sm text-gray-600">Location: {offer.location}</div>
+        <div className="text-sm text-gray-600">Quantity: {offer.quantity}</div>
+        <div className="text-sm text-gray-600">Pickup by: {new Date(offer.pickup_deadline).toLocaleString()}</div>
+        <div className="text-sm text-gray-600">Packaging: {offer.packaging}</div>
+        <div className="text-sm text-gray-600">Risk: <span className={offer.risk_level==='high' ? 'text-red-600' : offer.risk_level==='medium' ? 'text-yellow-600' : 'text-green-600'}>{offer.risk_level}</span></div>
+        <div className="text-sm text-gray-600">Notes: {offer.notes}</div>
+        <div className="flex gap-3 mt-4">
+          {offer.status!=='picked' && <button className="px-4 py-2 bg-emerald-600 text-white rounded-md" onClick={()=>onPick(offer)} onMouseEnter={() => playHoverSound(400)}>Mark Picked</button>}
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-md" onClick={()=>onMatch(offer)} onMouseEnter={() => playHoverSound(400)}>Find Match NGO</button>
+          <button className="px-4 py-2 border rounded-md" onClick={onClose} onMouseEnter={() => playHoverSound(300)}>Close</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+// NGO form modal
+function NGOForm({open, onClose, onSave, editing}) {
+  const [form, setForm] = React.useState(editing || {name:'',contact_person:'',phone:'',email:'',location:'',capacity:50,verified:false});
+  React.useEffect(()=> setForm(editing || {name:'',contact_person:'',phone:'',email:'',location:'',capacity:50,verified:false}), [editing, open]);
+  if (!open) return null;
+  return (
+    <Modal open={open} title={editing?'Edit NGO':'Add NGO'} onClose={onClose}>
+      <form onSubmit={(e)=>{ e.preventDefault(); onSave(form); }}>
+        <div className="grid gap-3">
+          <input className="p-2 border rounded" placeholder="Organization name" value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} required />
+          <input className="p-2 border rounded" placeholder="Contact person" value={form.contact_person} onChange={(e)=>setForm({...form,contact_person:e.target.value})} />
+          <input className="p-2 border rounded" placeholder="Phone" value={form.phone} onChange={(e)=>setForm({...form,phone:e.target.value})} />
+          <input className="p-2 border rounded" placeholder="Email" value={form.email} onChange={(e)=>setForm({...form,email:e.target.value})} />
+          <input className="p-2 border rounded" placeholder="Location / City" value={form.location} onChange={(e)=>setForm({...form,location:e.target.value})} />
+          <div className="flex gap-2">
+            <input type="number" className="p-2 border rounded w-32" value={form.capacity} onChange={(e)=>setForm({...form,capacity:parseInt(e.target.value||0)})} />
+            <label className="flex items-center gap-2"><input type="checkbox" checked={form.verified} onChange={(e)=>setForm({...form,verified:e.target.checked})} /> Verified</label>
+          </div>
+          <div className="flex justify-end gap-2 mt-3">
+            <button className="px-4 py-2 bg-emerald-600 text-white rounded" onMouseEnter={() => playHoverSound(400)}>Save</button>
+            <button type="button" className="px-4 py-2 border rounded" onClick={onClose} onMouseEnter={() => playHoverSound(300)}>Cancel</button>
+          </div>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+// Volunteer form modal
+function VolunteerForm({open, onClose, onSave, editing}) {
+  const [form, setForm] = React.useState(editing || {name:'',phone:'',email:'',location:'',availability:'available'});
+  React.useEffect(()=> setForm(editing || {name:'',phone:'',email:'',location:'',availability:'available'}), [editing, open]);
+  if (!open) return null;
+  return (
+    <Modal open={open} title={editing?'Edit Volunteer':'Add Volunteer'} onClose={onClose}>
+      <form onSubmit={(e)=>{ e.preventDefault(); onSave(form); }}>
+        <div className="grid gap-3">
+          <input className="p-2 border rounded" placeholder="Full name" value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} required />
+          <input className="p-2 border rounded" placeholder="Phone" value={form.phone} onChange={(e)=>setForm({...form,phone:e.target.value})} />
+          <input className="p-2 border rounded" placeholder="Email" value={form.email} onChange={(e)=>setForm({...form,email:e.target.value})} />
+          <input className="p-2 border rounded" placeholder="Location / City" value={form.location} onChange={(e)=>setForm({...form,location:e.target.value})} />
+          <select className="p-2 border rounded" value={form.availability} onChange={(e)=>setForm({...form,availability:e.target.value})}>
+            <option value="available">Available</option>
+            <option value="busy">Busy</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+          <div className="flex justify-end gap-2 mt-3">
+            <button className="px-4 py-2 bg-emerald-600 text-white rounded" onMouseEnter={() => playHoverSound(400)}>Save</button>
+            <button type="button" className="px-4 py-2 border rounded" onClick={onClose} onMouseEnter={() => playHoverSound(300)}>Cancel</button>
+          </div>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+// WhatsApp simulator (simple)
+function WhatsAppSim({onCreate}) {
+  const [text, setText] = React.useState('');
+  const samples = [
+    "We have 30 veg biryani portions cooked at 12:30, pickup till 4 PM, near Jubilee Hills. From Hotel Taj.",
+    "25 paneer meals ready from Hotel Taj, sealed containers, pickup by 6 PM, Banjara Hills",
+    "Fresh salad bowls x15 from Green Cafe, vegan, expires in 2 hours, pickup at MG Road"
+  ];
+  function parseMsg(txt){
+    const out = { title: txt.slice(0,80), donor_name:'Unknown', quantity:10, food_type:'mixed', packaging:'sealed', location:'Unknown' };
+    const q = txt.match(/(\d+)\s*(?:portions|meals|plates|bowls|x)/i); if (q) out.quantity = parseInt(q[1]);
+    const from = txt.match(/from\s+([\w\s&\-\.\']+?)(?:,|\.|$)/i); if (from) out.donor_name = from[1].trim();
+    if (/sealed/i.test(txt)) out.packaging='sealed'; if (/open/i.test(txt)) out.packaging='open';
+    const loc = txt.match(/near\s+([\w\s\-\.,&]+)/i) || txt.match(/at\s+([\w\s\-\.,&]+)/i); if (loc) out.location = loc[1].split(/[.,]/)[0].trim();
+    out.cooked_time = new Date().toISOString(); out.pickup_deadline = new Date(Date.now()+2*60*60*1000).toISOString();
+    out.risk_level = calcRisk(out);
+    return out;
+  }
+  return (
+    <div className="glass p-6 rounded-2xl">
+      <h3 className="font-semibold mb-2">WhatsApp Simulator</h3>
+      <textarea rows="4" className="w-full p-3 border rounded mb-3" placeholder="Paste message from donor" value={text} onChange={(e)=>setText(e.target.value)} />
+      <div className="flex gap-2">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={()=>{ const o = parseMsg(text || samples[0]); onCreate({...o, id: uid('offer')}); setText(''); toast('Offer added','success'); }} onMouseEnter={() => playHoverSound(400)}>Parse & Add Offer</button>
+        <button className="px-4 py-2 border rounded" onClick={()=>setText('')} onMouseEnter={() => playHoverSound(300)}>Clear</button>
+        <div className="ml-auto text-xs text-gray-500">Samples:</div>
+      </div>
+      <div className="mt-2 flex gap-2 flex-wrap">
+        {samples.map(s=> <button key={s} className="px-3 py-1 bg-white border rounded text-sm" onClick={()=>setText(s)} onMouseEnter={() => playHoverSound(250)}>{s.slice(0,30)}…</button>)}
+      </div>
+    </div>
+  );
+}
+// Confirmation Modal for NGO Match
+function ConfirmationModal({open, onClose, offer, ngo, onConfirm}) {
+  if (!open || !offer || !ngo) return null;
+  return (
+    <Modal open={open} title="Confirm NGO Match" onClose={onClose}>
+      <div className="space-y-4">
+        <div className="p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-800">Food Offer</h4>
+          <p className="text-sm mt-1">{offer.title}</p>
+          <p className="text-sm">Quantity: {offer.quantity} portions</p>
+          <p className="text-sm">Pickup by: {new Date(offer.pickup_deadline).toLocaleString()}</p>
+        </div>
+        <div className="p-4 bg-green-50 rounded-lg">
+          <h4 className="font-semibold text-green-800">Matched NGO</h4>
+          <p className="text-sm mt-1">{ngo.name}</p>
+          <p className="text-sm">Contact: {ngo.contact_person}</p>
+          <p className="text-sm">Phone: {ngo.phone}</p>
+        </div>
+        <div className="flex gap-3 mt-4">
+          <button
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md flex-1"
+            onClick={() => {
+              onConfirm(offer, ngo);
+              playConfirmationSound();
+            }}
+            onMouseEnter={() => playHoverSound(400)}
+          >
+            Confirm Match
+          </button>
+          <button className="px-4 py-2 border rounded-md flex-1" onClick={onClose} onMouseEnter={() => playHoverSound(300)}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+// Scheduling Modal
+function SchedulingModal({open, onClose, offer, ngo, onSaveSchedule}) {
+  const [pickupDate, setPickupDate] = React.useState('');
+  const [pickupTime, setPickupTime] = React.useState('');
+  const [notes, setNotes] = React.useState('');
+  React.useEffect(() => {
+    if (open && offer) {
+      const deadline = new Date(offer.pickup_deadline);
+      setPickupDate(deadline.toISOString().split('T')[0]);
+      setPickupTime(deadline.toTimeString().substring(0, 5));
+    }
+  }, [open, offer]);
+  if (!open || !offer || !ngo) return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const scheduledDateTime = new Date(`${pickupDate}T${pickupTime}`);
+    onSaveSchedule(offer, ngo, scheduledDateTime, notes);
+  };
+  return (
+    <Modal open={open} title="Schedule Pickup" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-800">Food Offer</h4>
+          <p className="text-sm mt-1">{offer.title}</p>
+          <p className="text-sm">Quantity: {offer.quantity} portions</p>
+        </div>
+        <div className="p-4 bg-green-50 rounded-lg">
+          <h4 className="font-semibold text-green-800">Matched NGO</h4>
+          <p className="text-sm mt-1">{ngo.name}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Date</label>
+            <input
+              type="date"
+              className="w-full p-2 border rounded"
+              value={pickupDate}
+              onChange={(e) => setPickupDate(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Time</label>
+            <input
+              type="time"
+              className="w-full p-2 border rounded"
+              value={pickupTime}
+              onChange={(e) => setPickupTime(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Special Notes</label>
+          <textarea
+            className="w-full p-2 border rounded"
+            rows="3"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any special instructions for pickup..."
+          />
+        </div>
+        <div className="flex gap-3 mt-4">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md flex-1"
+            onMouseEnter={() => playHoverSound(400)}
+          >
+            Schedule Pickup
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2 border rounded-md flex-1"
+            onClick={onClose}
+            onMouseEnter={() => playHoverSound(300)}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+// Volunteer Assignment Modal
+function VolunteerAssignmentModal({open, onClose, offer, volunteers, onAssign}) {
+  const [selectedVolunteer, setSelectedVolunteer] = React.useState('');
+  const [taskNotes, setTaskNotes] = React.useState('');
+  if (!open || !offer || !volunteers) return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!selectedVolunteer) {
+      toast('Please select a volunteer', 'error');
+      return;
+    }
+    onAssign(offer, selectedVolunteer, taskNotes);
+  };
+  return (
+    <Modal open={open} title="Assign Volunteer" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-800">Food Offer</h4>
+          <p className="text-sm mt-1">{offer.title}</p>
+          <p className="text-sm">Quantity: {offer.quantity} portions</p>
+          <p className="text-sm">Pickup: {new Date(offer.scheduled_pickup).toLocaleString()}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Select Volunteer</label>
+          <select
+            className="w-full p-2 border rounded"
+            value={selectedVolunteer}
+            onChange={(e) => setSelectedVolunteer(e.target.value)}
+            required
+          >
+            <option value="">Choose a volunteer</option>
+            {volunteers
+              .filter(v => v.availability === 'available')
+              .map(volunteer => (
+                <option key={volunteer.id} value={volunteer.id}>
+                  {volunteer.name} ({volunteer.location})
+                </option>
+              ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Task Notes</label>
+          <textarea
+            className="w-full p-2 border rounded"
+            rows="3"
+            value={taskNotes}
+            onChange={(e) => setTaskNotes(e.target.value)}
+            placeholder="Instructions for the volunteer..."
+          />
+        </div>
+        <div className="flex gap-3 mt-4">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md flex-1"
+            onMouseEnter={() => playHoverSound(400)}
+          >
+            Assign Volunteer
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2 border rounded-md flex-1"
+            onClick={onClose}
+            onMouseEnter={() => playHoverSound(300)}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+// Status Tracking Modal
+function StatusTrackingModal({open, onClose, offer, ngo, volunteers, tasks, onStatusChange, onFeedbackSubmit}) {
+  if (!open || !offer) return null;
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'available': { text: 'Available', color: 'bg-gray-100 text-gray-800' },
+      'matched': { text: 'Matched', color: 'bg-blue-100 text-blue-800' },
+      'confirmed': { text: 'Confirmed', color: 'bg-purple-100 text-purple-800' },
+      'scheduled': { text: 'Scheduled', color: 'bg-yellow-100 text-yellow-800' },
+      'picked up': { text: 'Picked Up', color: 'bg-orange-100 text-orange-800' },
+      'delivered': { text: 'Delivered', color: 'bg-indigo-100 text-indigo-800' },
+      'completed': { text: 'Completed', color: 'bg-green-100 text-green-800' }
+    };
+    const statusInfo = statusMap[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
+    return <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>{statusInfo.text}</span>;
+  };
+  const handleStatusChange = (newStatus) => {
+    onStatusChange(offer.id, newStatus);
+  };
+  const handleSubmitFeedback = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const feedback = {
+      donorRating: formData.get('donorRating'),
+      donorComment: formData.get('donorComment'),
+      ngoRating: formData.get('ngoRating'),
+      ngoComment: formData.get('ngoComment')
+    };
+    onFeedbackSubmit(offer.id, feedback);
+  };
+  return (
+    <Modal open={open} title="Status Tracking" onClose={onClose} wide>
+      <div className="space-y-6">
+        <div className="p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-800">Food Offer</h4>
+          <p className="text-sm mt-1">{offer.title}</p>
+          <p className="text-sm">Quantity: {offer.quantity} portions</p>
+          <div className="mt-2">
+            <span className="text-sm font-medium">Current Status: </span>
+            {getStatusBadge(offer.status)}
+          </div>
+        </div>
+        {ngo && (
+          <div className="p-4 bg-green-50 rounded-lg">
+            <h4 className="font-semibold text-green-800">Matched NGO</h4>
+            <p className="text-sm mt-1">{ngo.name}</p>
+            <p className="text-sm">Contact: {ngo.contact_person}</p>
+          </div>
+        )}
+        {offer.scheduled_pickup && (
+          <div className="p-4 bg-yellow-50 rounded-lg">
+            <h4 className="font-semibold text-yellow-800">Scheduled Pickup</h4>
+            <p className="text-sm">{new Date(offer.scheduled_pickup).toLocaleString()}</p>
+            {offer.pickup_notes && <p className="text-sm mt-1">Notes: {offer.pickup_notes}</p>}
+          </div>
+        )}
+        {tasks && tasks.length > 0 && (
+          <div className="p-4 bg-purple-50 rounded-lg">
+            <h4 className="font-semibold text-purple-800">Volunteer Tasks</h4>
+            <div className="mt-2 space-y-2">
+              {tasks.map(task => (
+                <div key={task.id} className="flex justify-between items-center p-2 bg-white rounded">
+                  <div>
+                    <p className="text-sm font-medium">{task.volunteer_name}</p>
+                    <p className="text-xs text-gray-500">{task.notes}</p>
+                  </div>
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                    task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                    task.status === 'in progress' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {task.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-semibold text-gray-800 mb-3">Update Status</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {['matched', 'confirmed', 'scheduled', 'picked up', 'delivered', 'completed'].map(status => (
+              <button
+                key={status}
+                className={`px-3 py-2 text-sm rounded ${
+                  offer.status === status
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => handleStatusChange(status)}
+                disabled={offer.status === status}
+                onMouseEnter={() => playHoverSound(300)}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        {offer.status === 'completed' && (
+          <div className="p-4 bg-indigo-50 rounded-lg">
+            <h4 className="font-semibold text-indigo-800 mb-3">Submit Feedback</h4>
+            <form onSubmit={handleSubmitFeedback} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Donor Rating</label>
+                <select name="donorRating" className="w-full p-2 border rounded" required>
+                  <option value="">Select rating</option>
+                  {[1,2,3,4,5].map(num => (
+                    <option key={num} value={num}>{num} Star{num > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Donor Comments</label>
+                <textarea
+                  name="donorComment"
+                  className="w-full p-2 border rounded"
+                  rows="2"
+                  placeholder="Your experience with the donor..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">NGO Rating</label>
+                <select name="ngoRating" className="w-full p-2 border rounded" required>
+                  <option value="">Select rating</option>
+                  {[1,2,3,4,5].map(num => (
+                    <option key={num} value={num}>{num} Star{num > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">NGO Comments</label>
+                <textarea
+                  name="ngoComment"
+                  className="w-full p-2 border rounded"
+                  rows="2"
+                  placeholder="Your experience with the NGO..."
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md"
+                onMouseEnter={() => playHoverSound(400)}
+              >
+                Submit Feedback
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+// Order Confirmation Animation
+function OrderConfirmation({ open, onClose }) {
+  if (!open) return null;
+  React.useEffect(() => {
+    if (open) {
+      playOrderPlacedSound();
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [open, onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="confirmation-animation bg-white rounded-2xl p-8 shadow-lg text-center max-w-md w-full">
+        <div className="flex justify-center mb-6">
+          <svg className="w-24 h-24 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle className="checkmark-circle" cx="12" cy="12" r="9" strokeWidth="2" fill="none" />
+            <path className="checkmark-circle" d="M8 12l2 2 4-4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Order Placed!</h2>
+        <p className="text-gray-600">Your food rescue has been successfully confirmed.</p>
+      </div>
+    </div>
+  );
+}
+// Create Offer Modal
+function CreateOfferModal({open, onClose, onCreate}) {
+  const [form, setForm] = React.useState({
+    title: '',
+    cooked_time: '',
+    pickup_deadline: '',
+    location: ''
+  });
+  React.useEffect(() => {
+    if (open) {
+      setForm({
+        title: '',
+        cooked_time: '',
+        pickup_deadline: '',
+        location: ''
+      });
+    }
+  }, [open]);
+  const handleChange = (e) => {
+    const {name, value} = e.target;
+    setForm(prev => ({...prev, [name]: value}));
+  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Basic validation
+    if (!form.title || !form.cooked_time || !form.pickup_deadline || !form.location) {
+      toast('Please fill all fields', 'error');
+      return;
+    }
+    // Create offer object
+    const newOffer = {
+      id: uid('offer'),
+      title: form.title,
+      cooked_time: new Date(form.cooked_time).toISOString(),
+      pickup_deadline: new Date(form.pickup_deadline).toISOString(),
+      location: form.location,
+      donor_name: 'Manual Entry',
+      quantity: 10, // Default quantity
+      food_type: 'mixed', // Default food type
+      packaging: 'sealed', // Default packaging
+      status: 'available',
+      notes: 'Manually created offer'
+    };
+    // Calculate risk
+    newOffer.risk_level = calcRisk(newOffer);
+    // Call onCreate callback
+    onCreate(newOffer);
+    onClose();
+  };
+  if (!open) return null;
+  return (
+    <Modal open={open} title="Create New Offer" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Food Item Name</label>
+          <input
+            type="text"
+            name="title"
+            className="w-full p-2 border rounded"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="e.g., Veg Biryani"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Prepared Time</label>
+          <input
+            type="datetime-local"
+            name="cooked_time"
+            className="w-full p-2 border rounded"
+            value={form.cooked_time}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Deadline</label>
+          <input
+            type="datetime-local"
+            name="pickup_deadline"
+            className="w-full p-2 border rounded"
+            value={form.pickup_deadline}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Collection Location</label>
+          <input
+            type="text"
+            name="location"
+            className="w-full p-2 border rounded"
+            value={form.location}
+            onChange={handleChange}
+            placeholder="e.g., Jubilee Hills, Hyderabad"
+            required
+          />
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md flex-1"
+            onMouseEnter={() => playHoverSound(400)}
+          >
+            Create Offer
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2 border rounded-md flex-1"
+            onClick={onClose}
+            onMouseEnter={() => playHoverSound(300)}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+// ---------- Main App ----------
+function App(){
+  const [offers, setOffers] = React.useState(()=> initialOffers);
+  const [ngos, setNGOs] = React.useState(()=> initialNGOs);
+  const [volunteers, setVolunteers] = React.useState(()=> initialVolunteers);
+  const [tasks, setTasks] = React.useState([]);
+  const [donors, setDonors] = React.useState([]);
+  const [view, setView] = React.useState('dashboard');
+  const [selectedOffer, setSelectedOffer] = React.useState(null);
+  const [ngoModalOpen, setNgoModalOpen] = React.useState(false);
+  const [volunteerModalOpen, setVolunteerModalOpen] = React.useState(false);
+  const [editingNgo, setEditingNgo] = React.useState(null);
+  const [editingVolunteer, setEditingVolunteer] = React.useState(null);
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [confirmationModalOpen, setConfirmationModalOpen] = React.useState(false);
+  const [schedulingModalOpen, setSchedulingModalOpen] = React.useState(false);
+  const [volunteerAssignmentModalOpen, setVolunteerAssignmentModalOpen] = React.useState(false);
+  const [statusTrackingModalOpen, setStatusTrackingModalOpen] = React.useState(false);
+  const [orderConfirmationOpen, setOrderConfirmationOpen] = React.useState(false);
+  const [createOfferModalOpen, setCreateOfferModalOpen] = React.useState(false); // State for Create Offer Modal
+  const [matchedNgo, setMatchedNgo] = React.useState(null);
+  const [scheduledOffer, setScheduledOffer] = React.useState(null);
+  const [darkMode, setDarkMode] = React.useState(false); // State for dark mode toggle
+  // Toggle dark mode
+  React.useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]); // Run effect when darkMode changes
+  React.useEffect(()=> save(LS_OFFERS, offers), [offers]);
+  React.useEffect(()=> save(LS_NGOS, ngos), [ngos]);
+  React.useEffect(()=> save(LS_VOLUNTEERS, volunteers), [volunteers]);
+  function addOffer(o){ setOffers(prev=> [o, ...prev]); toast('Offer added','success'); setView('offers'); }
+  function markPicked(o){ setOffers(prev => prev.map(p => p.id===o.id ? {...p, status:'picked'} : p)); toast('Marked picked','success'); setSelectedOffer(null); }
+  function addOrUpdateNgo(n){
+    if (n.id) { setNGOs(prev => prev.map(p => p.id===n.id ? {...p,...n} : p)); toast('NGO updated','success'); }
+    else { setNGOs(prev => [{...n, id: uid('ngo')}, ...prev]); toast('NGO added','success'); }
+    setNgoModalOpen(false); setEditingNgo(null);
+  }
+  function addOrUpdateVolunteer(v){
+    if (v.id) { setVolunteers(prev => prev.map(p => p.id===v.id ? {...p,...v} : p)); toast('Volunteer updated','success'); }
+    else { setVolunteers(prev => [{...v, id: uid('volunteer')}, ...prev]); toast('Volunteer added','success'); }
+    setVolunteerModalOpen(false); setEditingVolunteer(null);
+  }
+  function quickMatch(offer){
+    let candidates = ngos.filter(n => (n.location||'').toLowerCase().includes((offer.location||'').toLowerCase()));
+    if (!candidates.length) candidates = ngos.slice();
+    const dietary = candidates.filter(n => (n.dietary_preferences||[]).includes(offer.food_type));
+    if (dietary.length) candidates = dietary;
+    const cap = candidates.filter(n => (n.capacity||0) >= (offer.quantity||0));
+    if (cap.length) candidates = cap;
+    const nonzero = candidates.filter(n => (n.capacity||0) > 0);
+    if (nonzero.length) candidates = nonzero;
+    candidates.sort((a,b)=>(b.capacity||0)-(a.capacity||0));
+    const ngo = candidates[0];
+    if (!ngo) { toast('No match found','error'); return; }
+    // Set matched NGO and open confirmation modal
+    setMatchedNgo(ngo);
+    setScheduledOffer(offer);
+    setConfirmationModalOpen(true);
+  }
+  function confirmMatch(offer, ngo) {
+    // Update NGO capacity
+    setNGOs(prev => prev.map(n =>
+      n.id === ngo.id
+        ? {...n, capacity: Math.max(0,(n.capacity||0)-(offer.quantity||0)), total_received: (n.total_received||0) + (offer.quantity||0)}
+        : n
+    ));
+    // Update offer status
+    setOffers(prev => prev.map(o =>
+      o.id === offer.id
+        ? {...o, status:'matched', matched_with: ngo.id, donor_confirmed: true, ngo_confirmed: true}
+        : o
+    ));
+    toast('Match confirmed with ' + (ngo.name || 'NGO'),'success');
+    setConfirmationModalOpen(false);
+    setSchedulingModalOpen(true);
+  }
+  function saveSchedule(offer, ngo, scheduledDateTime, notes) {
+    // Update offer with scheduling info
+    setOffers(prev => prev.map(o =>
+      o.id === offer.id
+        ? {...o, status:'scheduled', scheduled_pickup: scheduledDateTime.toISOString(), pickup_notes: notes}
+        : o
+    ));
+    toast('Pickup scheduled successfully','success');
+    setSchedulingModalOpen(false);
+    // Automatically open volunteer assignment
+    setVolunteerAssignmentModalOpen(true);
+  }
+  function assignVolunteer(offer, volunteerId, taskNotes) {
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    if (!volunteer) {
+      toast('Volunteer not found', 'error');
+      return;
+    }
+    // Create task
+    const newTask = {
+      id: uid('task'),
+      offer_id: offer.id,
+      volunteer_id: volunteerId,
+      volunteer_name: volunteer.name,
+      notes: taskNotes,
+      status: 'assigned',
+      created_at: new Date().toISOString()
+    };
+    setTasks(prev => [...prev, newTask]);
+    // Update volunteer availability
+    setVolunteers(prev => prev.map(v =>
+      v.id === volunteerId ? {...v, availability: 'busy', total_tasks: (v.total_tasks || 0) + 1} : v
+    ));
+    toast(`Volunteer ${volunteer.name} assigned`, 'success');
+    setVolunteerAssignmentModalOpen(false);
+    // Show order confirmation animation
+    setOrderConfirmationOpen(true);
+  }
+  function updateStatus(offerId, newStatus) {
+    setOffers(prev => prev.map(o =>
+      o.id === offerId ? {...o, status: newStatus} : o
+    ));
+    toast(`Status updated to ${newStatus}`, 'success');
+    // If status is completed, open feedback form
+    if (newStatus === 'completed') {
+      const offer = offers.find(o => o.id === offerId);
+      if (offer) {
+        setSelectedOffer(offer);
+        setStatusTrackingModalOpen(true);
+      }
+    }
+  }
+  function submitFeedback(offerId, feedback) {
+    // In a real app, you would save this to the backend
+    console.log('Feedback submitted for offer', offerId, feedback);
+    toast('Feedback submitted successfully', 'success');
+    setStatusTrackingModalOpen(false);
+  }
+  function handleImport(mappedRows){
+    // mappedRows is array of {type:'offer'|'ngo', data:...} from DataImportModal
+    const newOffers = mappedRows.filter(r=> r.type==='offer').map(r=> ({...r.data, id: uid('offer'), risk_level: r.data.risk_level || calcRisk(r.data), status: r.data.status || 'available'}));
+    const newNgos = mappedRows.filter(r=> r.type==='ngo').map(r=> ({...r.data, id: uid('ngo')}));
+    if (newOffers.length) { setOffers(prev=> [...newOffers, ...prev]); toast('Imported ' + newOffers.length + ' offers','success'); setView('offers'); }
+    if (newNgos.length) { setNGOs(prev=> [...newNgos, ...prev]); toast('Imported ' + newNgos.length + ' NGOs','success'); setView('ngos'); }
+  }
+  function clearLocal(){
+    localStorage.removeItem(LS_OFFERS); localStorage.removeItem(LS_NGOS); localStorage.removeItem(LS_VOLUNTEERS);
+    setOffers(embeddedOffers); setNGOs(embeddedNGOs); setVolunteers(embeddedVolunteers); setTasks([]);
+    toast('Reset to embedded sample data','success');
+  }
+  // Stats
+  const activeOffers = offers.filter(o=> o.status==='available').length;
+  const totalPortions = offers.reduce((s,o)=> s + (o.quantity||0), 0);
+  const lowRisk = offers.filter(o=> o.risk_level==='low').length;
+  const totalNGOs = ngos.length;
+  const totalVolunteers = volunteers.length;
+  // UI layout
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row gap-6 p-4 md:p-8">
+      <aside className="md:w-72 glass p-4 rounded-tr-2xl rounded-br-2xl shadow">
+        <div className="hidden md:block mb-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-emerald-700">Food Rescue</h1>
+             <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+              onMouseEnter={() => playHoverSound(200)}
+            >
+              <Icon name={darkMode ? "sun" : "moon"} />
+            </button>
+          </div>
+          <p className="text-xs text-gray-600">Demo — ready to try</p>
+        </div>
+        <nav className="flex flex-col gap-2">
+          <button
+            onClick={()=>setView('dashboard')}
+            className={"w-full flex items-center gap-3 p-2 rounded-md "+(view==='dashboard'?'bg-emerald-100 text-emerald-700':'text-gray-700 hover:bg-gray-100')}
+            onMouseEnter={() => playHoverSound(200)}
+          >
+            <Icon name="dashboard" /> <span className="hidden md:inline">Dashboard</span>
+          </button>
+          <button
+            onClick={()=>setView('offers')}
+            className={"w-full flex items-center gap-3 p-2 rounded-md "+(view==='offers'?'bg-emerald-100 text-emerald-700':'text-gray-700 hover:bg-gray-100')}
+            onMouseEnter={() => playHoverSound(220)}
+          >
+            <Icon name="offers" /> <span className="hidden md:inline">Offers</span>
+          </button>
+          <button
+            onClick={()=>setView('ngos')}
+            className={"w-full flex items-center gap-3 p-2 rounded-md "+(view==='ngos'?'bg-emerald-100 text-emerald-700':'text-gray-700 hover:bg-gray-100')}
+            onMouseEnter={() => playHoverSound(240)}
+          >
+            <Icon name="ngos" /> <span className="hidden md:inline">NGO Network</span>
+          </button>
+          <button
+            onClick={()=>setView('volunteers')}
+            className={"w-full flex items-center gap-3 p-2 rounded-md "+(view==='volunteers'?'bg-emerald-100 text-emerald-700':'text-gray-700 hover:bg-gray-100')}
+            onMouseEnter={() => playHoverSound(260)}
+          >
+            <Icon name="volunteers" /> <span className="hidden md:inline">Volunteers</span>
+          </button>
+          <button
+            onClick={()=>setView('risk')}
+            className={"w-full flex items-center gap-3 p-2 rounded-md "+(view==='risk'?'bg-emerald-100 text-emerald-700':'text-gray-700 hover:bg-gray-100')}
+            onMouseEnter={() => playHoverSound(280)}
+          >
+            <Icon name="risk" /> <span className="hidden md:inline">Risk Monitor</span>
+          </button>
+          <button
+            onClick={()=>setView('whatsapp')}
+            className={"w-full flex items-center gap-3 p-2 rounded-md "+(view==='whatsapp'?'bg-emerald-100 text-emerald-700':'text-gray-700 hover:bg-gray-100')}
+            onMouseEnter={() => playHoverSound(300)}
+          >
+            <Icon name="chat" /> <span className="hidden md:inline">WhatsApp</span>
+          </button>
+        </nav>
+        <div className="mt-6 hidden md:block">
+          <button className="w-full py-2 px-3 rounded-md bg-emerald-600 text-white" onClick={()=> setImportOpen(true)} onMouseEnter={() => playHoverSound(350)}>Import Data</button>
+          <button className="w-full mt-2 py-2 px-3 rounded-md bg-white border" onClick={clearLocal} onMouseEnter={() => playHoverSound(350)}>Reset Sample</button>
+          <button className="w-full mt-2 py-2 px-3 rounded-md bg-white border" onClick={()=>{ save(LS_OFFERS, offers); save(LS_NGOS, ngos); save(LS_VOLUNTEERS, volunteers); toast('Saved to LocalStorage','success'); }} onMouseEnter={() => playHoverSound(350)}>Save</button>
+        </div>
+        <div className="mt-6 text-xs text-gray-500 hidden md:block">
+          <div>Active offers: <strong className="text-gray-800">{activeOffers}</strong></div>
+          <div>Total portions: <strong className="text-gray-800">{totalPortions}</strong></div>
+          <div>Partner NGOs: <strong className="text-gray-800">{totalNGOs}</strong></div>
+          <div>Volunteers: <strong className="text-gray-800">{totalVolunteers}</strong></div>
+        </div>
+      </aside>
+      <main className="flex-1">
+        <header className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-3xl font-bold text-emerald-800">Food Rescue — Demo</h2>
+            <p className="text-sm text-gray-600">Embedded dataset — India focused. Judges: works instantly.</p>
+          </div>
+          {/* Removed the import file button from top right corner */}
+        </header>
+        {view==='dashboard' && <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <StatCard title="Active Offers" value={activeOffers} hint="Click to view" onClick={()=>setView('offers')} />
+            <StatCard title="Total Portions" value={totalPortions} hint="Sum of quantities" />
+            <StatCard title="Low Risk Offers" value={lowRisk} hint="Safer items" />
+            <StatCard title="Partner NGOs" value={totalNGOs} hint="Manage NGOs" onClick={()=>setView('ngos')} />
+          </div>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold">Active Offers</h3>
+                  <button className="text-xs text-gray-500" onClick={()=>setView('offers')} onMouseEnter={() => playHoverSound(300)}>Open</button>
+                </div>
+                <div className="glass p-4 rounded-2xl">
+                  <OfferList offers={offers} onOpen={(o)=> setSelectedOffer(o)} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold">WhatsApp Simulator</h3>
+                  <button className="text-xs text-gray-500" onClick={()=>setView('whatsapp')} onMouseEnter={() => playHoverSound(300)}>Open</button>
+                </div>
+                <WhatsAppSim onCreate={addOffer} />
+              </div>
+            </div>
+            <aside>
+              <div className="mb-4">
+                <h3 className="font-semibold mb-2">Risk Monitor</h3>
+                <div className="glass p-4 rounded-lg">
+                  <div className="text-sm">High: <strong className="text-red-600">{offers.filter(o=>o.risk_level==='high').length}</strong></div>
+                  <div className="text-sm">Medium: <strong className="text-yellow-600">{offers.filter(o=>o.risk_level==='medium').length}</strong></div>
+                  <div className="text-sm">Low: <strong className="text-green-600">{offers.filter(o=>o.risk_level==='low').length}</strong></div>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">NGO Preview</h3>
+                <div className="glass p-4 rounded-lg text-sm">
+                  {ngos.slice(0,6).map(n => <div key={n.id} className="py-1">{n.name} <span className="text-xs text-gray-400">· {n.location}</span></div>)}
+                </div>
+              </div>
+            </aside>
+          </div>
+        </>}
+        {view==='offers' && <>
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Offers</h3>
+            <div><button className="px-3 py-2 bg-emerald-600 text-white rounded" onClick={()=> setCreateOfferModalOpen(true)} onMouseEnter={() => playHoverSound(400)}>Create Offer</button></div>
+          </div>
+          <div className="glass p-4 rounded-2xl"><OfferList offers={offers} onOpen={(o)=> { setSelectedOffer(o); setStatusTrackingModalOpen(true); }} /></div>
+        </>}
+        {view==='ngos' && <>
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-xl font-semibold">NGO Network</h3>
+            <div><button className="px-3 py-2 bg-emerald-600 text-white rounded" onClick={()=>{ setEditingNgo(null); setNgoModalOpen(true); }} onMouseEnter={() => playHoverSound(400)}>Add NGO</button></div>
+          </div>
+          <div className="glass p-4 rounded-2xl"><NGOList ngos={ngos} onEdit={(n)=>{ setEditingNgo(n); setNgoModalOpen(true); }} /></div>
+        </>}
+        {view==='volunteers' && <>
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Volunteers</h3>
+            <div><button className="px-3 py-2 bg-emerald-600 text-white rounded" onClick={()=>{ setEditingVolunteer(null); setVolunteerModalOpen(true); }} onMouseEnter={() => playHoverSound(400)}>Add Volunteer</button></div>
+          </div>
+          <div className="glass p-4 rounded-2xl"><VolunteerList volunteers={volunteers} onEdit={(v)=>{ setEditingVolunteer(v); setVolunteerModalOpen(true); }} /></div>
+        </>}
+        {view==='risk' && <>
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Risk Monitor</h3>
+            <div className="text-sm text-gray-500">Prioritize urgent pickups</div>
+          </div>
+          <RiskPanel offers={offers} onOpen={(o)=> setSelectedOffer(o)} />
+        </>}
+        {view==='whatsapp' && <>
+          <div className="mb-4"><h3 className="text-xl font-semibold">WhatsApp Simulator</h3></div>
+          <WhatsAppSim onCreate={addOffer} />
+        </>}
+      </main>
+      <OfferModal offer={selectedOffer} onClose={()=> setSelectedOffer(null)} onPick={markPicked} onMatch={quickMatch} />
+      <NGOForm open={ngoModalOpen} onClose={()=> { setNgoModalOpen(false); setEditingNgo(null); }} onSave={(p)=> { if (editingNgo) p.id = editingNgo.id; addOrUpdateNgo(p); }} editing={editingNgo} />
+      <VolunteerForm open={volunteerModalOpen} onClose={()=> { setVolunteerModalOpen(false); setEditingVolunteer(null); }} onSave={(v)=> { if (editingVolunteer) v.id = editingVolunteer.id; addOrUpdateVolunteer(v); }} editing={editingVolunteer} />
+      <DataImportModal open={importOpen} onClose={()=> setImportOpen(false)} onImport={handleImport} />
+      <CreateOfferModal open={createOfferModalOpen} onClose={()=> setCreateOfferModalOpen(false)} onCreate={addOffer} /> {/* Added Create Offer Modal */}
+      {/* New Modals for Post-Match Workflow */}
+      <ConfirmationModal
+        open={confirmationModalOpen}
+        onClose={()=> setConfirmationModalOpen(false)}
+        offer={scheduledOffer}
+        ngo={matchedNgo}
+        onConfirm={confirmMatch}
+      />
+      <SchedulingModal
+        open={schedulingModalOpen}
+        onClose={()=> setSchedulingModalOpen(false)}
+        offer={scheduledOffer}
+        ngo={matchedNgo}
+        onSaveSchedule={saveSchedule}
+      />
+      <VolunteerAssignmentModal
+        open={volunteerAssignmentModalOpen}
+        onClose={()=> setVolunteerAssignmentModalOpen(false)}
+        offer={scheduledOffer}
+        volunteers={volunteers}
+        onAssign={assignVolunteer}
+      />
+      <StatusTrackingModal
+        open={statusTrackingModalOpen}
+        onClose={()=> setStatusTrackingModalOpen(false)}
+        offer={selectedOffer}
+        ngo={ngos.find(n => n.id === selectedOffer?.matched_with)}
+        volunteers={volunteers}
+        tasks={tasks.filter(t => t.offer_id === selectedOffer?.id)}
+        onStatusChange={updateStatus}
+        onFeedbackSubmit={submitFeedback}
+      />
+      <OrderConfirmation
+        open={orderConfirmationOpen}
+        onClose={()=> setOrderConfirmationOpen(false)}
+      />
+    </div>
+  );
+}
+// mount
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
